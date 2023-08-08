@@ -289,12 +289,14 @@ contract Lotto666 is ReentrancyGuard, Ownable {
 
         uint256 reward = 0;
         for (uint256 i = 0; i < _ticketIds.length; i++) {
+            uint256 ticketId = _ticketIds[i];
+            require(ticketId < currentTicketId, "Invalid ticketId");
             require(
-                _tickets[_ticketIds[i]].owner == msg.sender,
+                _tickets[ticketId].owner == msg.sender,
                 "Not the owner of the ticket"
             );
 
-            reward += rewardsForBracket[_tickets[_ticketIds[i]].bracket];
+            reward += rewardsForBracket[_tickets[ticketId].bracket];
 
             delete _tickets[_ticketIds[i]];
         }
@@ -357,6 +359,69 @@ contract Lotto666 is ReentrancyGuard, Ownable {
             }
         }
         return current;
+    }
+
+    function viewRewardsBreakdown() external view returns (uint256[6] memory) {
+        return rewardsBreakdown;
+    }
+
+    function viewRewardsForBracket() external view returns (uint256[6] memory) {
+        return rewardsForBracket;
+    }
+
+    // get tickets id list of an address
+    function viewTicketsOfAddress(
+        address owner
+    ) public view returns (uint256[] memory) {
+        uint256[] memory ownedTickets = new uint256[](currentTicketId);
+        uint256 count = 0;
+        for (uint256 i = 0; i < currentTicketId; i++) {
+            if (_tickets[i].owner == owner) {
+                ownedTickets[count++] = i;
+            }
+        }
+        uint256[] memory result = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = ownedTickets[i];
+        }
+        return result;
+    }
+
+    // get claimable tickets id list of an address
+    function viewClaimableTicketsOfAddress(
+        address owner
+    ) public view returns (uint256[] memory) {
+        uint256[] memory ownedTickets = viewTicketsOfAddress(owner);
+        uint256[] memory claimableTickets = new uint256[](ownedTickets.length);
+        uint256 count = 0;
+        for (uint256 i = 0; i < ownedTickets.length; i++) {
+            uint256 bracket = _tickets[ownedTickets[i]].bracket;
+            if (rewardsForBracket[bracket] > 0) {
+                claimableTickets[count++] = ownedTickets[i];
+            }
+        }
+        uint256[] memory result = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = claimableTickets[i];
+        }
+        return result;
+    }
+
+    function viewRewardsAmount(
+        uint256[] memory _ticketIds
+    ) public view returns (uint256) {
+        if (status != Status.Claimable || _ticketIds.length == 0) {
+            return 0;
+        }
+        uint256 reward = 0;
+        for (uint256 i = 0; i < _ticketIds.length; i++) {
+            reward += rewardsForBracket[_tickets[_ticketIds[i]].bracket];
+        }
+        return reward;
+    }
+
+    function viewMyRewardsAmount() external view returns (uint256) {
+        return viewRewardsAmount(viewClaimableTicketsOfAddress(msg.sender));
     }
 
     /**

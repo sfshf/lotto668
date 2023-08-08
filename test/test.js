@@ -175,6 +175,11 @@ describe("Token contract", function () {
         prizedTicketIndexs.push(ethers.BigNumber.from(index));
       }
     }
+    const addr2Tickets = await lotto666.viewClaimableTicketsOfAddress(
+      addr2.address
+    );
+    // console.log("addr2Tickets:", addr2Tickets);
+    expect(addr2Tickets.length).to.equal(prizedTicketIndexs.length);
     if (prizedTicketIndexs.length > 0) {
       // get money.
       await lotto666.connect(addr2).claimTickets(prizedTicketIndexs);
