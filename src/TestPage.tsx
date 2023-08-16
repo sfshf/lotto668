@@ -43,6 +43,9 @@ function TestPage() {
   );
 
   const [usdBalance, setUsdBalance] = useState<Number>(0);
+  const [decimal, setDecimal] = useState<ethers.BigNumber | undefined>(
+    undefined
+  );
 
   const handleAccountsChanged = useCallback(
     (accounts: any) => {
@@ -99,11 +102,16 @@ function TestPage() {
         );
         // console.log(connectedAccount);
         const balance = await contract.balanceOf(connectedAccount);
-        const decimal = await contract.decimals();
+        if (decimal === undefined) {
+          const _decimal = await contract.decimals();
+          setDecimal(_decimal);
+          const usdBalance = ethers.utils.formatUnits(balance, _decimal);
+          setUsdBalance(Number(usdBalance));
+        } else {
+          const usdBalance = ethers.utils.formatUnits(balance, decimal);
+          setUsdBalance(Number(usdBalance));
+        }
 
-        const usdBalance = ethers.utils.formatUnits(balance, decimal);
-        //   console.log("Balance: ", ether);
-        setUsdBalance(Number(usdBalance));
         setLoading(false);
       } catch (error) {
         setLoading(false);
@@ -158,27 +166,26 @@ function TestPage() {
         const rewardsBreakdown = await contract.viewRewardsBreakdown();
         // console.log("Rewards Breakdown: ", rewardsBreakdown.toString());
         list.push("Rewards Breakdown: " + rewardsBreakdown.toString());
-        const ticketPrice = ethers.utils.formatEther(
-          await contract.ticketPrice()
-        );
+        const ticketPrice = await contract.ticketPrice();
         // console.log("Ticket Price: ", ticketPrice.toString());
-        list.push("Ticket Price: " + ticketPrice.toString());
+        const ticketPriceInUSD = ethers.utils.formatUnits(ticketPrice, decimal);
+        list.push("Ticket Price: " + ticketPriceInUSD.toString());
         const treasuryFee = await contract.treasuryFee();
         // console.log("Treasury Fee: ", treasuryFee.toString());
         list.push("Treasury Fee: " + treasuryFee.toString());
         const jackpotAmount = await contract.jackpotAmount();
-        list.push(
-          "Accumulated Jackpot: " +
-            ethers.utils.formatEther(jackpotAmount).toString()
+        const jackpotAmountInUSD = ethers.utils.formatUnits(
+          jackpotAmount,
+          decimal
         );
+        list.push("Accumulated Jackpot: " + jackpotAmountInUSD.toString());
 
         const balanceOfLotto = await usdContract.balanceOf(
           config.LOTTO666_ADDRESS
         );
         const prizePool = balanceOfLotto.sub(jackpotAmount);
-        list.push(
-          "PrizePool : " + ethers.utils.formatEther(prizePool).toString()
-        );
+        const prizePoolInUSD = ethers.utils.formatUnits(prizePool, decimal);
+        list.push("PrizePool : " + prizePoolInUSD.toString());
 
         const currentTicketId = await contract.currentTicketId();
         // console.log("Current Ticket Id: ", currentTicketId.toString());
@@ -376,7 +383,8 @@ function TestPage() {
       }
 
       const reward = await contract.viewMyRewardsAmount();
-      list.push(`My reward: ${ethers.utils.formatEther(reward)} USD`);
+      const rewardInUSD = ethers.utils.formatUnits(reward, decimal);
+      list.push(`My reward: ${rewardInUSD.toString()} USD`);
 
       setTicketsList(list);
       setLoading(false);
