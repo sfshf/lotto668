@@ -13,9 +13,9 @@ module.exports = {
       chainId: 43113,
     },
     avax: {
-      url: process.env.QUICKNODE_URL,
+      url: "https://api.avax.network/ext/bc/C/rpc",
       accounts: [`0x` + process.env.PRIVATE_KEY],
-      chainId: 43113,
+      chainId: 43114,
     },
   },
 };

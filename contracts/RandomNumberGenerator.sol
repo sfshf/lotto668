@@ -12,8 +12,9 @@ contract RandomNumberGenerator is Ownable, IRandomNumberGenerator {
 
     function requestRandomValue(uint256 _seedHash) external override onlyOwner {
         seedHash = _seedHash;
+        // block.prevrandao
         blockRandomResult =
-            uint256(blockhash(block.number)) ^
+            block.difficulty ^
             uint256(block.timestamp) ^
             seedHash;
         requestBlockNumber = block.number;
@@ -35,7 +36,10 @@ contract RandomNumberGenerator is Ownable, IRandomNumberGenerator {
             _seedHash == seedHash,
             "RandomNumberGenerator: seedHash mismatch"
         );
-        randomResult = uint256(blockRandomResult ^ _seed);
+        randomResult = uint256(
+            keccak256(abi.encodePacked(blockRandomResult ^ _seed)) ^
+                blockhash(requestBlockNumber)
+        );
 
         return randomResult;
     }

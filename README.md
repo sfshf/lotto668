@@ -18,6 +18,7 @@ edit .env
 then:
 
 yarn hardhat run scripts/deployFuji.js --network fuji
+yarn hardhat run scripts/deploy.js --network avax
 
 ## Fuji test network
 

@@ -9,10 +9,14 @@ import Typography from "@mui/material/Typography";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import Backdrop from "@mui/material/Backdrop";
-import config from "./config";
+import { testConfig, releaseConfig } from "./config";
 import USDToken from "./artifacts/contracts/USD.sol/USDToken.json";
 // import RandomNumberGenerator.sol from './artifacts/contracts/RandomNumberGenerator.sol.sol/RandomNumberGenerator.sol.json'
 import Lotto666 from "./artifacts/contracts/Lotto.sol/Lotto666.json";
+import LotterySelector from "./LotterySelector";
+
+const config = import.meta.env.VITE_ENV === "dev" ? testConfig : releaseConfig;
+// console.log(import.meta.env.VITE_ENV);
 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
   props,
@@ -84,17 +88,29 @@ function TestPage() {
 
   async function requestBalance() {
     if (typeof ethereum !== "undefined") {
-      const provider = new ethers.providers.Web3Provider(ethereum);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(
-        config.USD_TOKEN_ADDRESS,
-        USDToken.abi,
-        signer
-      );
-      const balance = await contract.balanceOf(connectedAccount);
-      const ether = ethers.utils.formatEther(balance);
-      //   console.log("Balance: ", ether);
-      setUsdBalance(Number(ether));
+      try {
+        setLoading(true);
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(
+          config.USD_TOKEN_ADDRESS,
+          USDToken.abi,
+          signer
+        );
+        // console.log(connectedAccount);
+        const balance = await contract.balanceOf(connectedAccount);
+        const decimal = await contract.decimals();
+
+        const usdBalance = ethers.utils.formatUnits(balance, decimal);
+        //   console.log("Balance: ", ether);
+        setUsdBalance(Number(usdBalance));
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        console.log("Error: ", error);
+        const msg = error.message;
+        setErrorToast(msg);
+      }
     }
   }
 
@@ -214,9 +230,8 @@ function TestPage() {
     }
   }
   async function buyTickets() {
-    // console.log("buyTickets");
-    // todo select a number
-    setToast("Coming soon, please select a number");
+    setAutoPickCount(0);
+    setPickDialogOpen(true);
   }
 
   async function getRandomTicketNumber() {
@@ -247,12 +262,11 @@ function TestPage() {
     }
   }
 
-  async function buyARandomTicket() {
+  const generateRandomLottery = async () => {
     if (ethereum === undefined) {
-      return;
+      return "";
     }
     try {
-      setLoading(true);
       const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
       const contract = new ethers.Contract(
@@ -262,50 +276,33 @@ function TestPage() {
       );
       const randomValue = ethers.BigNumber.from(ethers.utils.randomBytes(32));
       const ticketNumber = await contract.getRandomTicketNumber(randomValue);
-      const transaction = await contract.buyTickets([ticketNumber]);
-      await transaction.wait();
+      //   console.log("Ticket Number: ", ticketNumber.toString());
       const ticketNumber666 = await contract.viewTicketNumber(ticketNumber);
-      setToast("Buy Success! Ticket Number 666: " + ticketNumber666.toString());
-      console.log("gas used: ", transaction.gasLimit.toString());
-      setLoading(false);
+      // console.log("Ticket Number 666: ", ticketNumber666.toString());
+      // setToast("Ticket Number: " + ticketNumber666.toString());
+      return ticketNumber666.toString();
     } catch (error) {
-      setLoading(false);
       console.log("Error: ", error);
       const msg = error.message;
       setErrorToast(msg);
     }
+    return "";
+  };
+
+  async function buyARandomTicket() {
+    if (ethereum === undefined) {
+      return;
+    }
+    setAutoPickCount(1);
+    setPickDialogOpen(true);
   }
 
   async function buyTenRandomTickets() {
     if (ethereum === undefined) {
       return;
     }
-    try {
-      setLoading(true);
-      const provider = new ethers.providers.Web3Provider(ethereum);
-      const signer = provider.getSigner();
-      const contract = new ethers.Contract(
-        config.LOTTO666_ADDRESS,
-        Lotto666.abi,
-        signer
-      );
-      const list: ethers.BigNumber[] = [];
-      for (let i = 0; i < 10; i++) {
-        const randomValue = ethers.BigNumber.from(ethers.utils.randomBytes(32));
-        const ticketNumber = await contract.getRandomTicketNumber(randomValue);
-        list.push(ticketNumber);
-      }
-      const transaction = await contract.buyTickets(list);
-      await transaction.wait();
-      setToast("Buy Success! ");
-      console.log("gas used: ", transaction.gasLimit.toString());
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      console.log("Error: ", error);
-      const msg = error.message;
-      setErrorToast(msg);
-    }
+    setAutoPickCount(10);
+    setPickDialogOpen(true);
   }
 
   async function viewOwnedTickets() {
@@ -696,6 +693,83 @@ function TestPage() {
     }
   }
 
+  const stringToTicketNumber = (str: string) => {
+    const list = str.split(",").reverse();
+    let ticketNumber = BigNumber.from(0);
+    for (let i = 0; i < list.length; i++) {
+      const num = Number(list[i]) - 1;
+      ticketNumber = ticketNumber.mul(66).add(BigNumber.from(num));
+    }
+
+    return ticketNumber;
+  };
+
+  const [pickDialogOpen, setPickDialogOpen] = useState(false);
+  const [autoPickCount, setAutoPickCount] = useState(0);
+  const onSelectNumbers = async (numbers: string[]) => {
+    setPickDialogOpen(false);
+    try {
+      setLoading(true);
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(
+        config.LOTTO666_ADDRESS,
+        Lotto666.abi,
+        signer
+      );
+      const list: ethers.BigNumber[] = numbers.map((str) =>
+        stringToTicketNumber(str)
+      );
+      const transaction = await contract.buyTickets(list);
+      await transaction.wait();
+      setToast("Buy Success! ");
+      console.log("gas used: ", transaction.gasLimit.toString());
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log("Error: ", error);
+      const msg = error.message;
+      setErrorToast(msg);
+    }
+  };
+
+  async function changePrice() {
+    if (ethereum === undefined) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const provider = new ethers.providers.Web3Provider(ethereum);
+      const signer = provider.getSigner();
+      const contract = new ethers.Contract(
+        config.LOTTO666_ADDRESS,
+        Lotto666.abi,
+        signer
+      );
+
+      const usdContract = new ethers.Contract(
+        config.USD_TOKEN_ADDRESS,
+        USDToken.abi,
+        signer
+      );
+
+      const decimal = await usdContract.decimals();
+      const price = ethers.utils.parseUnits("2.0", decimal);
+      // console.log(price.toString());
+
+      const transaction = await contract.setTicketPrice(price);
+      await transaction.wait();
+
+      setToast("Set Success");
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log("Error: ", error);
+      const msg = error.message;
+      setErrorToast(msg);
+    }
+  }
+
   if (supportedNetwork === undefined) {
     return (
       <Box sx={{ display: "flex" }}>
@@ -766,19 +840,19 @@ function TestPage() {
       </Button>
 
       <Button variant="contained" color="success" onClick={approveUSD}>
-        approveUSD
+        approve USD
       </Button>
       <Button variant="contained" color="success" onClick={buyTickets}>
-        buyTickets
+        buy Tickets
       </Button>
 
-      <Button
+      {/* <Button
         variant="contained"
         color="success"
         onClick={getRandomTicketNumber}
       >
         get a random ticket number
-      </Button>
+      </Button> */}
       <Button variant="contained" color="success" onClick={buyARandomTicket}>
         Buy a random ticket
       </Button>
@@ -822,6 +896,16 @@ function TestPage() {
       <Button variant="contained" color="error" onClick={changeRewardBreakdown}>
         change prize distribution
       </Button>
+      <Button variant="contained" color="error" onClick={changePrice}>
+        change price
+      </Button>
+      <LotterySelector
+        open={pickDialogOpen}
+        setOpen={setPickDialogOpen}
+        onFinish={onSelectNumbers}
+        generateRandomLottery={generateRandomLottery}
+        autoPickCount={autoPickCount}
+      />
       <Snackbar
         open={errorToast !== ""}
         autoHideDuration={5000}

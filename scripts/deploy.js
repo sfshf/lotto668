@@ -1,8 +1,17 @@
-const { ethers } = require("hardhat");
-
-// deploy to avalanche c-chain
+// deploy to fuji testnet
 async function main() {
-  const usdTokenAddress = "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7"; // usdt
+  // const usdFactory = await ethers.getContractFactory("USDToken");
+  // const usdToken = await usdFactory.deploy();
+  // await usdToken.deployed();
+  // console.log(
+  //   "usdToken Contract deployed to: ",
+  //   usdToken.address,
+  //   " on fuji testnet deployed by ",
+  //   JSON.stringify(usdToken.signer)
+  // );
+  // const usdTokenAddress = usdToken.address;
+  const usdTokenAddress = "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7";
+
   const randomFactory = await ethers.getContractFactory(
     "RandomNumberGenerator"
   );
@@ -32,6 +41,9 @@ async function main() {
   console.log("randomGenerator new owner:", await randomGenerator.owner());
 
   process.exit(0);
+
+  //   RandomNumberGenerator Contract deployed to:  0xbd7e5989222De959D4f3f2b14F22a581961c8607  on fuji testnet deployed by  "<SignerWithAddress 0x67E8284440A145cd812C2A6469A600c237cbC487>"
+  // Lotto666 Contract deployed to:  0xF67e9ED6EbD2D1D0ff71B4BdbC0EE086ED91bc57  on fuji testnet deployed by  "<SignerWithAddress 0x67E8284440A145cd812C2A6469A600c237cbC487>"
 }
 
 main()

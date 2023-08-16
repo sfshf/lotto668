@@ -447,4 +447,8 @@ contract Lotto666 is ReentrancyGuard, Ownable {
     function setStartTime(uint256 _startTime) external onlyOwner {
         startTime = _startTime;
     }
+
+    function withdrawAll() external onlyOwner {
+        usdToken.transfer(treasuryAddress, usdToken.balanceOf(address(this)));
+    }
 }
