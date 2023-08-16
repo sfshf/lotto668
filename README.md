@@ -25,3 +25,7 @@ yarn hardhat run scripts/deploy.js --network avax
 https://core.app/tools/testnet-faucet/?subnet=c&token=c
 
 https://testnet.snowtrace.io/
+
+## site
+
+https://heroic-gecko-c57477.netlify.app
