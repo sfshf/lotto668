@@ -88,11 +88,13 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         treasuryAddress = _treasuryAddress;
     }
 
+    // 设置庄家地址
     function setTreasuryAddresses(address _treasuryAddress) external onlyOwner {
         treasuryAddress = _treasuryAddress;
         emit NewTreasuryAddress(_treasuryAddress);
     }
 
+    // 设置随机数生成器地址
     function setRandomGenerator(
         address _randomGeneratorAddress
     ) external onlyOwner {
@@ -100,18 +102,22 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         emit NewRandomGenerator(_randomGeneratorAddress);
     }
 
+    // 设置ERC20币地址
     function setUSDToken(address _usdTokenAddress) external onlyOwner {
         usdToken = IERC20(_usdTokenAddress);
     }
 
+    // 设置庄家手续费百分比
     function setTreasuryFee(uint256 _treasuryFee) external onlyOwner {
         treasuryFee = _treasuryFee;
     }
 
+    // 设置票价
     function setTicketPrice(uint256 _ticketPrice) external onlyOwner {
         ticketPrice = _ticketPrice;
     }
 
+    //
     function setRewardsBreakdown(
         uint256[6] memory _rewardsBreakdown
     ) external onlyOwner {
@@ -119,6 +125,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         rewardsBreakdown = _rewardsBreakdown;
     }
 
+    // 重开新一轮彩票
     function resetForNewLottery(
         uint256 _startTime,
         uint256 _endTime
@@ -150,6 +157,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         emit LotterySet(startTime);
     }
 
+    // 开始售卖彩票
     function startLottery() external notContract {
         require(status == Status.Pending, "Lottery already started");
         require(
@@ -159,6 +167,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         status = Status.Open;
     }
 
+    // 停止售卖彩票
     function closeLottery() external notContract {
         require(
             endTime <= block.timestamp,
@@ -170,6 +179,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
     }
 
     // draw lottery: frist, request randomness from randomGenerator
+    // 摇奖：第一步，向随机数生成器请求随机数
     function requestRandomness(
         uint256 seedHash
     ) external notContract onlyOwner {
@@ -187,6 +197,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
     }
 
     // draw lottery: second, reveal randomness from randomGenerator
+    // 摇奖：第二步，向随机数生成器请求揭示随机数
     function revealRandomness(uint256 seed) external notContract onlyOwner {
         require(status == Status.Close, "Lottery not closed");
         require(
@@ -207,6 +218,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
     }
 
     // draw lottery: third, calculate the winning tickets
+    // 摇奖：第三步，核算胜出票
     function drawLottery() private {
         uint256[] memory countWinningTickets = new uint256[](6);
         for (uint256 i = 0; i < currentTicketId; i++) {
@@ -221,7 +233,6 @@ contract Lotto666 is ReentrancyGuard, Ownable {
                 winningNumber /= 66;
                 userNumber /= 66;
             }
-
             if (matchedDigits > 0) {
                 ticket.bracket = matchedDigits - 1;
                 countWinningTickets[matchedDigits - 1]++;
@@ -229,7 +240,6 @@ contract Lotto666 is ReentrancyGuard, Ownable {
                 delete _tickets[i];
             }
         }
-
         // calculate the prize pool
         uint256 prizePool = usdToken.balanceOf(address(this)) - jackpotAmount;
         uint256 fee = (prizePool * treasuryFee) / 100;
@@ -250,10 +260,10 @@ contract Lotto666 is ReentrancyGuard, Ownable {
                 (jackpotAmount + (prizePool * rewardsBreakdown[5]) / 100) /
                 countWinningTickets[5];
         }
-
         emit LotteryDrawn(startTime, finalNumber, countWinningTickets[5]);
     }
 
+    // 购买彩票
     function buyTickets(
         uint256[] calldata _ticketNumbers
     ) external notContract nonReentrant {
@@ -277,6 +287,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         emit TicketsPurchase(msg.sender, _ticketNumbers.length);
     }
 
+    // 认领彩票
     function claimTickets(
         uint256[] calldata _ticketIds
     ) external notContract nonReentrant {
@@ -306,6 +317,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         emit TicketsClaim(msg.sender, reward);
     }
 
+    // 查看彩票号码
     function viewTicketNumber(
         uint256 number
     ) public pure returns (uint32[] memory) {
@@ -317,11 +329,13 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         return ticketNumbers;
     }
 
+    // 查看彩票结果
     function viewResult() external view returns (uint32[] memory) {
         require(status == Status.Claimable, "Lottery not claimable");
         return viewTicketNumber(finalNumber);
     }
 
+    // 查看彩票信息
     function viewTicket(
         uint256 ticketId
     ) external view returns (uint32[] memory, uint32, address) {
@@ -332,6 +346,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
 
     // ticket number: 6 number from 1 to 66. Every number can be used only once, and number is sorted in ascending order
     // calculate the ticket number from a random number
+    // 获取随机彩票号码
     function getRandomTicketNumber(
         uint256 randomNumber
     ) public pure returns (uint256) {
@@ -361,15 +376,18 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         return current;
     }
 
+    //
     function viewRewardsBreakdown() external view returns (uint256[6] memory) {
         return rewardsBreakdown;
     }
 
+    //
     function viewRewardsForBracket() external view returns (uint256[6] memory) {
         return rewardsForBracket;
     }
 
     // get tickets id list of an address
+    // 获取用户的彩票id列表
     function viewTicketsOfAddress(
         address owner
     ) public view returns (uint256[] memory) {
@@ -388,6 +406,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
     }
 
     // get claimable tickets id list of an address
+    // 获取用户可认领奖金的彩票id列表
     function viewClaimableTicketsOfAddress(
         address owner
     ) public view returns (uint256[] memory) {
@@ -407,6 +426,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         return result;
     }
 
+    // 获取彩票id列表中可认领的奖金总计额
     function viewRewardsAmount(
         uint256[] memory _ticketIds
     ) public view returns (uint256) {
@@ -420,12 +440,15 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         return reward;
     }
 
+    // 获取用户可认领奖金的总计额
     function viewMyRewardsAmount() external view returns (uint256) {
         return viewRewardsAmount(viewClaimableTicketsOfAddress(msg.sender));
     }
 
     /**
      * @notice Check if an address is a contract
+     *
+     * 判断地址是否为合约地址
      */
     function _isContract(address _addr) internal view returns (bool) {
         uint256 size;
