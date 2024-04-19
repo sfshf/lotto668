@@ -117,7 +117,7 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         ticketPrice = _ticketPrice;
     }
 
-    //
+    // 设置兑奖比例
     function setRewardsBreakdown(
         uint256[6] memory _rewardsBreakdown
     ) external onlyOwner {
@@ -376,12 +376,12 @@ contract Lotto666 is ReentrancyGuard, Ownable {
         return current;
     }
 
-    //
+    // 查看兑奖比例
     function viewRewardsBreakdown() external view returns (uint256[6] memory) {
         return rewardsBreakdown;
     }
 
-    //
+    // 查看奖池金额
     function viewRewardsForBracket() external view returns (uint256[6] memory) {
         return rewardsForBracket;
     }

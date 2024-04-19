@@ -62,9 +62,11 @@ function TestPage() {
 
   useEffect(() => {
     async function checkNetwork() {
+      // 检查metamask ethereum插件
       if (typeof ethereum !== "undefined") {
         await ethereum.enable();
         setSupportedNetwork(true);
+        // 获取metamask钱包里的账号列表
         const accounts = await ethereum.request({
           method: "eth_requestAccounts",
         });
@@ -128,11 +130,13 @@ function TestPage() {
     }
   }, [connectedAccount]);
 
+  // 更新metamask账号
   async function connectMetaMask() {
     const accounts = await ethereum.request({ method: "eth_requestAccounts" });
     handleAccountsChanged(accounts);
   }
 
+  // 查看彩票结果
   async function checkLotteryStatus() {
     if (typeof ethereum !== "undefined") {
       const provider = new ethers.providers.Web3Provider(ethereum);
@@ -209,6 +213,7 @@ function TestPage() {
     }
   }
 
+  // 委托转账
   async function approveUSD() {
     if (ethereum === undefined) {
       return;
@@ -236,11 +241,13 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+  // 购买彩票
   async function buyTickets() {
     setAutoPickCount(0);
     setPickDialogOpen(true);
   }
 
+  // 获取随机彩票号码
   async function getRandomTicketNumber() {
     if (ethereum === undefined) {
       return;
@@ -269,6 +276,7 @@ function TestPage() {
     }
   }
 
+  // 生成随机彩票号码
   const generateRandomLottery = async () => {
     if (ethereum === undefined) {
       return "";
@@ -296,6 +304,7 @@ function TestPage() {
     return "";
   };
 
+  // 设置随机购买一张彩票
   async function buyARandomTicket() {
     if (ethereum === undefined) {
       return;
@@ -303,7 +312,7 @@ function TestPage() {
     setAutoPickCount(1);
     setPickDialogOpen(true);
   }
-
+  // 设置随机购买十张彩票
   async function buyTenRandomTickets() {
     if (ethereum === undefined) {
       return;
@@ -312,6 +321,7 @@ function TestPage() {
     setPickDialogOpen(true);
   }
 
+  // 查看已购彩票
   async function viewOwnedTickets() {
     if (ethereum === undefined || connectedAccount === undefined) {
       return;
@@ -351,6 +361,7 @@ function TestPage() {
     }
   }
 
+  // 查看可兑奖彩票
   async function checkClaimable() {
     if (ethereum === undefined || connectedAccount === undefined) {
       return;
@@ -396,6 +407,7 @@ function TestPage() {
     }
   }
 
+  // 彩票兑奖
   async function claimTickets() {
     if (ethereum === undefined) {
       return;
@@ -425,6 +437,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+  // 重开新一轮彩票
   async function resetForNewLottery() {
     if (ethereum === undefined) {
       return;
@@ -458,6 +471,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+  // 开始售卖彩票
   async function startLottery() {
     if (ethereum === undefined) {
       return;
@@ -484,6 +498,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+  // 停止售卖彩票
   async function closeLottery() {
     if (ethereum === undefined) {
       return;
@@ -510,6 +525,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+  // 获取随机数
   async function requestRandomness() {
     if (ethereum === undefined) {
       return;
@@ -539,6 +555,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+  // 揭示随机数结果
   async function revealRandomness() {
     if (ethereum === undefined) {
       return;
@@ -567,6 +584,8 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+
+  // 修改售卖时间
   async function changeStartTime() {
     if (ethereum === undefined) {
       return;
@@ -596,6 +615,8 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+
+  // 修改停止售卖时间
   async function changeEndTime() {
     if (ethereum === undefined) {
       return;
@@ -625,6 +646,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
+  // 修改停止兑奖时间
   async function changeRewardTime() {
     if (ethereum === undefined) {
       return;
@@ -654,7 +676,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   }
-
+  // 修改兑奖比例
   async function changeRewardBreakdown() {
     if (ethereum === undefined) {
       return;
@@ -701,6 +723,7 @@ function TestPage() {
     }
   }
 
+  // 字符串号码转数值
   const stringToTicketNumber = (str: string) => {
     const list = str.split(",").reverse();
     let ticketNumber = BigNumber.from(0);
@@ -740,7 +763,7 @@ function TestPage() {
       setErrorToast(msg);
     }
   };
-
+  // 修改票价
   async function changePrice() {
     if (ethereum === undefined) {
       return;
