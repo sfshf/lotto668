@@ -1,5 +1,7 @@
-require("dotenv").config();
+const { vars } = require("hardhat/config");
 require("@nomiclabs/hardhat-ethers");
+
+const FUJI_PRIVATE_KEY = vars.get("FUJI_PRIVATE_KEY");
 
 module.exports = {
   solidity: "0.8.6",
@@ -13,15 +15,11 @@ module.exports = {
     },
     hardhat: {
     },
-    // sepolia: {
-    //   url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
-    //   accounts: [SEPOLIA_PRIVATE_KEY]
-    // },
-    // fuji: {
-    //   url: process.env.QUICKNODE_URL,
-    //   accounts: [`0x` + process.env.PRIVATE_KEY],
-    //   chainId: 43113,
-    // },
+    fuji: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      accounts: [FUJI_PRIVATE_KEY],
+      chainId: 43113,
+    },
     // avax: {
     //   url: "https://api.avax.network/ext/bc/C/rpc",
     //   accounts: [`0x` + process.env.PRIVATE_KEY],
